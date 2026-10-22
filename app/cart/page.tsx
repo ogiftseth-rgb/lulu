@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { removeCartItem, updateCartItem } from "@/app/actions";
 import { getCart } from "@/lib/queries";
 import { getCurrentUser, getGuestId } from "@/lib/session";
@@ -20,7 +19,7 @@ export default async function CartPage() {
         {lines.map((line) => (
           <li key={line.id} className="flex gap-4 py-4">
             {line.product.images[0]?.url ? (
-              <Image src={line.product.images[0].url} alt="" width={96} height={128} className="h-28 w-24 object-cover" />
+              <img src={line.product.images[0].url} alt="" width={96} height={128} className="h-28 w-24 object-cover" />
             ) : null}
             <div className="flex-1">
               <h2 className="font-display text-2xl">{line.product.name}</h2>

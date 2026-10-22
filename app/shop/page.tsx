@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { ProductFigure } from "@/components/product-card";
 import { PageHero } from "@/components/site-footer";
 import { filterProducts, getCategories, getProducts, getWishlistIds } from "@/lib/queries";

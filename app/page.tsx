@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { Gem, Ruler, Scissors, Sparkles } from "lucide-react";
 import { Hero } from "@/components/hero";
 import { Photo } from "@/components/photo";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { useState } from "react";
 import { Photo } from "@/components/photo";
 import { kes } from "@/lib/utils";

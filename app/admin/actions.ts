@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireStaff } from "@/lib/admin";
 import { parseCouponText } from "@/lib/coupons";
@@ -10,6 +10,7 @@ const orderStatuses = ["pending_payment", "confirmed", "in_production", "ready",
 const bespokeStatuses = ["New Request", "Consultation booked", "In production", "Ready for fitting", "Completed"] as const;
 
 function refreshShop() {
+  revalidateTag("catalogue");
   revalidatePath("/admin", "layout");
   revalidatePath("/");
   revalidatePath("/shop");

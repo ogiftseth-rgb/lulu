@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { Photo } from "@/components/photo";
 import { PageHero } from "@/components/site-footer";
 import { getPosts } from "@/lib/queries";

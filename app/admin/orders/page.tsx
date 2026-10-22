@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { updateOrderStatus } from "@/app/admin/actions";
 import { db } from "@/lib/supabase";
 import { kes } from "@/lib/utils";

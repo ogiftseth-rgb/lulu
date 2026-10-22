@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { addToCartQuiet, toggleWishlist } from "@/app/actions";
 import { Photo } from "@/components/photo";
 import { QuickView } from "@/components/quick-view";

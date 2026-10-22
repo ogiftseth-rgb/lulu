@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { notFound } from "next/navigation";
 import { OrderSheet } from "@/components/order-sheet";
 import { getOrderById } from "@/lib/queries";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { notFound } from "next/navigation";
 import { Photo } from "@/components/photo";
 import { getPost, getPosts } from "@/lib/queries";

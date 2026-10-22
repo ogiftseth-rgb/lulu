@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { redirect } from "next/navigation";
 import { logoutAccount, updateProfile } from "@/app/actions";
 import { getOrders } from "@/lib/queries";

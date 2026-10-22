@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { Photo } from "@/components/photo";
 

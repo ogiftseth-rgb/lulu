@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Photo } from "@/components/photo";
 import { PageHero } from "@/components/site-footer";
 import { getPageContent, getPosts } from "@/lib/queries";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 
 export const metadata: Metadata = { title: "About Us" };
 

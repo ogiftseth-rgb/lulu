@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -401,6 +401,7 @@ export async function placeOrder(formData: FormData) {
 
   const cart = await findCart(user?.id ?? null, sessionId);
   if (cart) await db().from("glam_cart_items").delete().eq("cart_id", cart.id);
+  revalidateTag("catalogue");
   redirect(`/checkout?placed=${number}`);
 }
 

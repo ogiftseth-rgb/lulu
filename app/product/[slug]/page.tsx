@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { notFound } from "next/navigation";
-import { PurchasePanel } from "@/components/forms";
+import { PurchasePanel } from "@/components/purchase-panel";
 import { Photo } from "@/components/photo";
 import { ProductFigure } from "@/components/product-card";
 import { getProduct, getRelated, getReviews, getWishlistIds } from "@/lib/queries";

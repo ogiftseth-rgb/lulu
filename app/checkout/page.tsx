@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { CheckoutForm } from "@/components/forms";
 import { OrderSheet } from "@/components/order-sheet";
 import { getCart, getOrderByNumber } from "@/lib/queries";

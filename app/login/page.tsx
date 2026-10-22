@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { AuthForm } from "@/components/forms";
 import { PageHero } from "@/components/site-footer";
 

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { db } from "@/lib/supabase";
 import type { CartLine, Category, GalleryImage, HeroSlide, Post, Product, Review, ShopQuery, TeamMember } from "@/lib/types";
 import { priceOf } from "@/lib/utils";
@@ -49,7 +50,7 @@ export function stockOf(product: Product) {
   return product.variants.reduce((sum, variant) => sum + variant.stock, 0);
 }
 
-export async function getSettings() {
+async function loadSettings() {
   const { data } = await db().from("glam_settings").select("key, value");
   const settings: Record<string, string> = {};
   for (const row of data ?? []) settings[row.key] = row.value;
@@ -69,7 +70,7 @@ export async function getSettings() {
   };
 }
 
-export async function getPageContent() {
+async function loadPageContent() {
   const { data } = await db().from("glam_page_content").select("key, title, body, image_url");
   const pages: Record<string, { title: string; body: string; imageUrl: string | null }> = {};
   for (const row of data ?? []) {
@@ -78,7 +79,7 @@ export async function getPageContent() {
   return pages;
 }
 
-export async function getHeroSlides(): Promise<HeroSlide[]> {
+async function loadHeroSlides(): Promise<HeroSlide[]> {
   const { data } = await db()
     .from("glam_hero_slides")
     .select("*")
@@ -96,7 +97,7 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   }));
 }
 
-export async function getCategories(): Promise<Category[]> {
+async function loadCategories(): Promise<Category[]> {
   const { data } = await db().from("glam_categories").select("*").order("sort_order");
   return (data ?? []).map((row) => ({
     id: row.id,
@@ -108,7 +109,7 @@ export async function getCategories(): Promise<Category[]> {
   }));
 }
 
-export async function getProducts() {
+async function loadProducts() {
   const { data, error } = await db()
     .from("glam_products")
     .select(PRODUCT_SELECT)
@@ -131,7 +132,7 @@ export async function getNewArrivals() {
   return products.filter((product) => product.isNew).slice(0, 4);
 }
 
-export async function getProduct(slug: string) {
+async function loadProduct(slug: string) {
   const { data, error } = await db().from("glam_products").select(PRODUCT_SELECT).eq("slug", slug).maybeSingle();
   if (error || !data || data.status !== "published") return null;
   return mapProduct(data as Record<string, unknown>);
@@ -165,7 +166,7 @@ export function filterProducts(products: Product[], query: ShopQuery) {
   return items;
 }
 
-export async function getReviews(productId?: string): Promise<Review[]> {
+async function loadReviews(productId?: string): Promise<Review[]> {
   let query = db().from("glam_reviews").select("id, author_name, quote, rating, created_at, product_id, glam_products(name)").eq("approved", true);
   if (productId) query = query.eq("product_id", productId);
   const { data, error } = await query.order("created_at", { ascending: false });
@@ -186,7 +187,7 @@ export async function getReviews(productId?: string): Promise<Review[]> {
   });
 }
 
-export async function getPosts(): Promise<Post[]> {
+async function loadPosts(): Promise<Post[]> {
   const { data, error } = await db()
     .from("glam_blog_posts")
     .select("id, title, slug, excerpt, content, image_url, author, published_at, highlights, glam_blog_categories(name, slug)")
@@ -199,7 +200,7 @@ export async function getPosts(): Promise<Post[]> {
   return (data ?? []).map(mapPost);
 }
 
-export async function getPost(slug: string) {
+async function loadPost(slug: string) {
   const { data, error } = await db()
     .from("glam_blog_posts")
     .select("id, title, slug, excerpt, content, image_url, author, published_at, highlights, glam_blog_categories(name, slug)")
@@ -236,7 +237,7 @@ function mapPost(row: {
   };
 }
 
-export async function getTeam(): Promise<TeamMember[]> {
+async function loadTeam(): Promise<TeamMember[]> {
   const { data } = await db().from("glam_team").select("*").order("sort_order");
   return (data ?? []).map((row) => ({
     id: row.id,
@@ -247,7 +248,7 @@ export async function getTeam(): Promise<TeamMember[]> {
   }));
 }
 
-export async function getGallery(): Promise<GalleryImage[]> {
+async function loadGallery(): Promise<GalleryImage[]> {
   const { data } = await db().from("glam_gallery").select("*").order("sort_order");
   return (data ?? []).map((row) => ({ id: row.id, title: row.title, imageUrl: row.image_url }));
 }
@@ -341,7 +342,63 @@ export async function getOrders(userId: string) {
   return data ?? [];
 }
 
-export async function reviewCount() {
+async function loadReviewCount() {
   const { count } = await db().from("glam_reviews").select("id", { count: "exact", head: true }).eq("approved", true);
   return count ?? 0;
+}
+
+const remember = { revalidate: 120, tags: ["catalogue"] };
+
+export const getSettings = unstable_cache(loadSettings, ["glam-settings"], remember);
+export const getPageContent = unstable_cache(loadPageContent, ["glam-pages"], remember);
+export const getHeroSlides = unstable_cache(loadHeroSlides, ["glam-hero"], remember);
+export const getCategories = unstable_cache(loadCategories, ["glam-categories"], remember);
+export const getProducts = unstable_cache(loadProducts, ["glam-products"], remember);
+export const getProduct = unstable_cache(loadProduct, ["glam-product"], remember);
+export const getReviews = unstable_cache(loadReviews, ["glam-reviews"], remember);
+export const getPosts = unstable_cache(loadPosts, ["glam-posts"], remember);
+export const getPost = unstable_cache(loadPost, ["glam-post"], remember);
+export const getTeam = unstable_cache(loadTeam, ["glam-team"], remember);
+export const getGallery = unstable_cache(loadGallery, ["glam-gallery"], remember);
+export const reviewCount = unstable_cache(loadReviewCount, ["glam-review-count"], remember);
+
+export async function getCartSummary(userId: string | null, sessionId: string) {
+  const cart = await findCart(userId, sessionId);
+  if (!cart) return [];
+  const { data, error } = await db()
+    .from("glam_cart_items")
+    .select("id, quantity, size, colour, glam_products(name, slug, regular_price, sale_price, glam_product_images(url, sort_order))")
+    .eq("cart_id", cart.id);
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return (data ?? []).flatMap((row) => {
+    const product = one(row.glam_products as unknown as {
+      name: string;
+      slug: string;
+      regular_price: number;
+      sale_price: number | null;
+      glam_product_images: { url: string; sort_order: number }[] | null;
+    } | {
+      name: string;
+      slug: string;
+      regular_price: number;
+      sale_price: number | null;
+      glam_product_images: { url: string; sort_order: number }[] | null;
+    }[] | null);
+    if (!product) return [];
+    const raw = (product.glam_product_images ?? []).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? "";
+    const image = raw.includes("images.unsplash.com") ? raw.replace(/([?&])w=\d+/, "$1w=200") : raw;
+    return [{
+      id: row.id as string,
+      name: product.name,
+      quantity: row.quantity as number,
+      size: row.size as string,
+      colour: row.colour as string,
+      price: product.sale_price ?? product.regular_price,
+      image,
+      slug: product.slug,
+    }];
+  });
 }

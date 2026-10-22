@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import Link from "@/components/nav-link";
 import { useState } from "react";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { removeCartItem, updateCartItem } from "@/app/actions";
@@ -136,7 +135,7 @@ export function SiteHeader({
             <ul className="space-y-4">
               {cart.map((line) => (
                 <li key={line.id} className="flex gap-3 py-3">
-                  {line.image ? <Image src={line.image} alt="" width={80} height={96} className="h-24 w-20 object-cover" /> : null}
+                  {line.image ? <img src={line.image} alt="" width={80} height={96} className="h-24 w-20 object-cover" /> : null}
                   <div className="flex-1">
                     <Link href={`/product/${line.slug}`} className="font-medium">{line.name}</Link>
                     <p className="text-sm text-rose">{line.colour} / {line.size}</p>
