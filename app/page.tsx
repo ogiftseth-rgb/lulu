@@ -4,19 +4,23 @@ import { Hero } from "@/components/hero";
 import { Photo } from "@/components/photo";
 import { ProductFigure } from "@/components/product-card";
 import { ReviewSlider } from "@/components/review-slider";
-import { getPageContent, getPosts, getProducts, getHeroSlides, getReviews, getSettings, getTeam, getWishlistIds, reviewCount } from "@/lib/queries";
+import { getCategories, getPageContent, getPosts, getProducts, getHeroSlides, getReviews, getSettings, getTeam, getWishlistIds, reviewCount } from "@/lib/queries";
 import { getCurrentUser, getGuestId } from "@/lib/session";
 
 const occasions = [
   ["Weddings", "Weddings"],
   ["Ruracio", "Ruracio celebrations"],
   ["Corporate", "Corporate events"],
+  ["Receptions", "Bridal receptions"],
+  ["Birthdays", "Birthdays"],
+  ["Date nights", "Date nights"],
+  ["Weekends", "Weekend occasions"],
 ] as const;
 
 export default async function HomePage() {
   const user = await getCurrentUser();
   const sessionId = await getGuestId();
-  const [slides, products, reviews, posts, team, pages, settings, wished, notes] = await Promise.all([
+  const [slides, products, reviews, posts, team, pages, settings, wished, notes, categories] = await Promise.all([
     getHeroSlides(),
     getProducts(),
     getReviews(),
@@ -26,9 +30,11 @@ export default async function HomePage() {
     getSettings(),
     getWishlistIds(user?.id ?? null, sessionId),
     reviewCount(),
+    getCategories(),
   ]);
   const story = pages.story;
   const featured = products.filter((product) => product.featured).slice(0, 4);
+  const arrivals = products.filter((product) => product.isNew).slice(0, 4);
   const looks = occasions.map(([label, occasion]) => {
     const match = products.find((product) => product.occasion === occasion);
     return { label, occasion, image: match?.images[0]?.url ?? "" };
@@ -84,10 +90,24 @@ export default async function HomePage() {
       </section>
       <section className="edit">
         <div className="edit-head">
-          <h2>Our favourites, <span className="rose">your edit</span></h2>
-          <Link href="/shop">View all categories</Link>
+          <h2>Shop by <span className="rose">category</span></h2>
+          <Link href="/shop">View the shop</Link>
         </div>
-        <div className="looks">
+        <div className="looks dense">
+          {categories.map((category) => (
+            <Link key={category.id} href={`/shop?category=${category.slug}`} className="look">
+              <Photo src={category.imageUrl} alt="" sizes="(max-width: 800px) 100vw, 30vw" />
+              <span>{category.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+      <section className="edit">
+        <div className="edit-head">
+          <h2>Our favourites, <span className="rose">your edit</span></h2>
+          <Link href="/shop">Every occasion</Link>
+        </div>
+        <div className="looks dense">
           {looks.map((look) => (
             <Link key={look.occasion} href={`/shop?occasion=${encodeURIComponent(look.occasion)}`} className="look">
               <Photo src={look.image} alt="" sizes="(max-width: 800px) 100vw, 30vw" />
@@ -109,6 +129,19 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      {arrivals.length > 0 && (
+        <section className="edit">
+          <div className="edit-head">
+            <h2>New <span className="rose">arrivals</span></h2>
+            <Link href="/products">View all products</Link>
+          </div>
+          <div className="pieces">
+            {arrivals.map((product, index) => (
+              <ProductFigure key={product.id} product={product} wished={wished.has(product.id)} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="atelier">
         <div>
           <h2>Our atelier</h2>

@@ -78,6 +78,7 @@ export function SiteHeader({
           <Link href="/contact">Contact Us</Link>
         </nav>
         <div className="ml-auto flex items-center gap-3 lg:ml-6">
+          <Link href="/wishlist" className="hidden text-sm md:inline">Saved</Link>
           <Link href={firstName ? "/account" : "/register"} className="hidden text-sm md:inline">
             {firstName ? firstName : "Register"}
           </Link>
@@ -96,7 +97,7 @@ export function SiteHeader({
       </div>
       {open && (
         <div className="border-t border-champagne bg-ivory px-4 py-4 lg:hidden">
-          {(isStaff ? ["/admin"] : []).concat(["/", "/about", "/products", "/shop", "/gallery", "/team", "/testimonials", "/blog", "/contact", "/register"]).map((href) => (
+          {(isStaff ? ["/admin"] : []).concat(["/", "/about", "/products", "/shop", "/wishlist", "/gallery", "/team", "/testimonials", "/blog", "/contact", firstName ? "/account" : "/register"]).map((href) => (
             <Link key={href} href={href} className="block py-2" onClick={() => setOpen(false)}>
               {href === "/" ? "Home" : href === "/admin" ? "Admin" : href.slice(1).replace("-", " ")}
             </Link>

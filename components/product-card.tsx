@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { addToCartQuiet, toggleWishlist } from "@/app/actions";
 import { Photo } from "@/components/photo";
+import { QuickView } from "@/components/quick-view";
 import type { Product } from "@/lib/types";
 import { kes, priceOf } from "@/lib/utils";
 
@@ -47,6 +48,15 @@ export function ProductFigure({
           <input type="hidden" name="productId" value={product.id} />
           <button>{wished ? "Saved" : "Save"}</button>
         </form>
+        <QuickView
+          name={product.name}
+          slug={product.slug}
+          description={product.description}
+          price={price}
+          image={image}
+          sizes={[...new Set(product.variants.map((item) => item.size))]}
+          colours={[...new Set(product.variants.map((item) => item.colour))]}
+        />
       </div>
     </article>
   );

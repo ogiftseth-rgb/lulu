@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CheckoutForm } from "@/components/forms";
-import { getCart } from "@/lib/queries";
+import { OrderSheet } from "@/components/order-sheet";
+import { getCart, getOrderByNumber } from "@/lib/queries";
 import { getCurrentUser, getGuestId } from "@/lib/session";
 import { kes, priceOf } from "@/lib/utils";
 
@@ -9,6 +10,7 @@ export const metadata: Metadata = { title: "Checkout" };
 
 export default async function CheckoutPage({ searchParams }: { searchParams: Promise<{ placed?: string }> }) {
   const placed = (await searchParams).placed;
+  const placedOrder = placed ? await getOrderByNumber(placed) : null;
   const user = await getCurrentUser();
   const lines = await getCart(user?.id ?? null, await getGuestId());
   const subtotal = lines.reduce((sum, line) => sum + priceOf(line.product) * line.quantity, 0);
@@ -16,11 +18,10 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
     <main className="mx-auto grid max-w-6xl gap-10 px-4 py-16 lg:grid-cols-2">
       <section>
         <h1 className="font-display text-5xl">Checkout</h1>
-        {placed ? (
-          <div className="mt-6 rounded-[2rem] bg-white p-6">
-            <h2 className="font-display text-3xl">Order {placed} is saved.</h2>
-            <p className="mt-3">Status: pending payment. M-Pesa will be connected when those keys are added. This order was not charged.</p>
-            <Link href="/account" className="mt-4 inline-block underline">View your account</Link>
+        {placed && placedOrder ? (
+          <div className="mt-6 space-y-4">
+            <OrderSheet order={placedOrder} kind="receipt" />
+            {user ? <Link href="/account" className="inline-block underline">View your account</Link> : null}
           </div>
         ) : (
           <div className="mt-6"><CheckoutForm empty={lines.length === 0} /></div>

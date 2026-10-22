@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { readCoupons } from "@/lib/coupons";
 import { findCart, getCart } from "@/lib/queries";
 import { clearAuthCookie, getCurrentUser, getGuestId, setAuthCookie } from "@/lib/session";
 import { db } from "@/lib/supabase";
@@ -31,6 +32,12 @@ async function cartId() {
 
 export async function addToCartQuiet(formData: FormData) {
   await addToCart(formData);
+}
+
+export async function buyNow(formData: FormData) {
+  const result = await addToCart(formData);
+  if (result?.error) return result;
+  redirect("/checkout");
 }
 
 export async function addToCart(formData: FormData) {
@@ -334,6 +341,14 @@ export async function placeOrder(formData: FormData) {
   }
 
   const subtotal = lines.reduce((sum, line) => sum + priceOf(line.product) * line.quantity, 0);
+  const code = String(formData.get("coupon") ?? "").trim().toUpperCase();
+  let discount = 0;
+  if (code) {
+    const coupons = await readCoupons();
+    const match = coupons.find((coupon) => coupon.code === code);
+    if (!match) return { error: "That coupon code is not active." };
+    discount = Math.min(subtotal, Math.round((subtotal * match.percent) / 100));
+  }
   const deliveryFee = deliveryFees[parsed.data.deliveryMethod];
   const orderId = id();
   const number = `GL-${Date.now().toString().slice(-8)}`;
@@ -347,13 +362,13 @@ export async function placeOrder(formData: FormData) {
     county: parsed.data.county,
     town: parsed.data.town,
     address: parsed.data.address,
-    notes: parsed.data.notes || null,
+    notes: [parsed.data.notes, code ? `Coupon ${code}` : ""].filter(Boolean).join("\n") || null,
     delivery_method: parsed.data.deliveryMethod,
     payment_method: "mpesa_pending",
     status: "pending_payment",
     subtotal,
     delivery_fee: deliveryFee,
-    total: subtotal + deliveryFee,
+    total: subtotal + deliveryFee - discount,
     is_demo: false,
   });
   if (error) return { error: "We could not place the order." };
@@ -387,4 +402,37 @@ export async function placeOrder(formData: FormData) {
   const cart = await findCart(user?.id ?? null, sessionId);
   if (cart) await db().from("glam_cart_items").delete().eq("cart_id", cart.id);
   redirect(`/checkout?placed=${number}`);
+}
+
+export async function updateProfile(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const firstName = String(formData.get("firstName") ?? "").trim();
+  const lastName = String(formData.get("lastName") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  if (firstName.length < 2 || lastName.length < 2 || phone.length < 8) {
+    redirect(`/account?notice=${encodeURIComponent("Check your name and phone.")}`);
+  }
+  const patch: Record<string, string> = {
+    first_name: firstName,
+    last_name: lastName,
+    phone,
+    updated_at: new Date().toISOString(),
+  };
+  const nextPassword = String(formData.get("nextPassword") ?? "");
+  if (nextPassword) {
+    if (nextPassword.length < 8) {
+      redirect(`/account?notice=${encodeURIComponent("Use at least 8 characters for the new password.")}`);
+    }
+    const { data } = await db().from("glam_users").select("password_hash").eq("id", user.id).maybeSingle();
+    const currentPassword = String(formData.get("currentPassword") ?? "");
+    if (!data || !(await bcrypt.compare(currentPassword, data.password_hash))) {
+      redirect(`/account?notice=${encodeURIComponent("Current password does not match.")}`);
+    }
+    patch.password_hash = await bcrypt.hash(nextPassword, 10);
+  }
+  const { error } = await db().from("glam_users").update(patch).eq("id", user.id);
+  if (error) redirect(`/account?notice=${encodeURIComponent("We could not save the profile.")}`);
+  revalidatePath("/", "layout");
+  redirect(`/account?notice=${encodeURIComponent("Profile saved.")}`);
 }

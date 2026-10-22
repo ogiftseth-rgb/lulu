@@ -286,6 +286,52 @@ export async function getWishlistIds(userId: string | null, sessionId: string) {
   return new Set((data ?? []).map((row) => row.product_id as string));
 }
 
+const ORDER_COLUMNS =
+  "id, number, user_id, name, email, phone, county, town, address, notes, delivery_method, payment_method, status, subtotal, delivery_fee, total, created_at, glam_order_items(name, size, colour, quantity, unit_price)";
+
+export type OrderItem = {
+  name: string;
+  size: string;
+  colour: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type OrderRecord = {
+  id: string;
+  number: string;
+  user_id: string | null;
+  name: string;
+  email: string;
+  phone: string;
+  county: string;
+  town: string;
+  address: string;
+  notes: string | null;
+  delivery_method: string;
+  payment_method: string;
+  status: string;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  created_at: string;
+  glam_order_items: OrderItem[];
+};
+
+export function orderDiscount(order: { subtotal: number; delivery_fee: number; total: number }) {
+  return Math.max(0, order.subtotal + order.delivery_fee - order.total);
+}
+
+export async function getOrderByNumber(number: string) {
+  const { data } = await db().from("glam_orders").select(ORDER_COLUMNS).eq("number", number).maybeSingle();
+  return (data as OrderRecord | null) ?? null;
+}
+
+export async function getOrderById(id: string) {
+  const { data } = await db().from("glam_orders").select(ORDER_COLUMNS).eq("id", id).maybeSingle();
+  return (data as OrderRecord | null) ?? null;
+}
+
 export async function getOrders(userId: string) {
   const { data } = await db()
     .from("glam_orders")

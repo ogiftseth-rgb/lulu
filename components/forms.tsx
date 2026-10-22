@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { addToCart, loginAccount, placeOrder, registerAccount, submitBespoke, submitContact } from "@/app/actions";
+import { addToCart, buyNow, loginAccount, placeOrder, registerAccount, submitBespoke, submitContact } from "@/app/actions";
 import type { Product } from "@/lib/types";
 import { kes } from "@/lib/utils";
 
@@ -77,6 +77,7 @@ export function CheckoutForm({ empty }: { empty: boolean }) {
       <input name="town" required placeholder="Town or city" />
       <textarea name="address" required placeholder="Delivery address" />
       <textarea name="notes" placeholder="Delivery notes" />
+      <input name="coupon" placeholder="Coupon code" autoComplete="off" />
       <select name="deliveryMethod" defaultValue="nairobi" aria-label="Delivery method">
         <option value="studio">Studio collection, Westlands — KES 0</option>
         <option value="nairobi">Nairobi courier — KES 500</option>
@@ -94,7 +95,10 @@ export function PurchasePanel({ product }: { product: Product }) {
   const sizes = [...new Set(product.variants.map((variant) => variant.size))];
   const [colour, setColour] = useState(colours[0] ?? "");
   const [size, setSize] = useState(sizes[0] ?? "");
-  const [state, formAction, pending] = useActionState(async (_prev: State, formData: FormData) => addToCart(formData), null);
+  const [state, formAction, pending] = useActionState(async (_prev: State, formData: FormData) => {
+    if (formData.get("intent") === "buy") return buyNow(formData);
+    return addToCart(formData);
+  }, null);
   const variant = product.variants.find((item) => item.size === size && item.colour === colour);
   return (
     <form action={formAction} className="space-y-4">
@@ -118,7 +122,8 @@ export function PurchasePanel({ product }: { product: Product }) {
       {state?.error && <p className="field-error">{state.error}</p>}
       {state?.ok && <p className="text-sm">Added to your bag.</p>}
       <div className="flex flex-wrap gap-3">
-        <button className="rounded-full bg-burgundy px-6 py-3 text-ivory" disabled={pending || !variant || variant.stock < 1}>Add to bag</button>
+        <button name="intent" value="bag" className="rounded-full bg-burgundy px-6 py-3 text-ivory" disabled={pending || !variant || variant.stock < 1}>Add to bag</button>
+        <button name="intent" value="buy" className="rounded-full border border-burgundy px-6 py-3" disabled={pending || !variant || variant.stock < 1}>Buy now</button>
         <a className="rounded-full border border-burgundy px-6 py-3" href={`https://wa.me/254712345678?text=${encodeURIComponent(`I am asking about ${product.name} (${product.sku})`)}`}>WhatsApp</a>
       </div>
     </form>

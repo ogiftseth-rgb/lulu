@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { updateOrderStatus } from "@/app/admin/actions";
 import { db } from "@/lib/supabase";
 import { kes } from "@/lib/utils";
@@ -31,6 +32,11 @@ export default async function AdminOrdersPage() {
               <li key={`${item.name}-${item.size}-${item.colour}`}>{item.name} · {item.colour} / {item.size} × {item.quantity}</li>
             ))}
           </ul>
+          <p className="mt-3 flex flex-wrap gap-3 text-sm">
+            <Link href={`/admin/orders/${order.id}?doc=invoice`} className="underline">Invoice</Link>
+            <Link href={`/admin/orders/${order.id}?doc=receipt`} className="underline">Receipt</Link>
+            <Link href={`/admin/orders/${order.id}?doc=delivery`} className="underline">Delivery note</Link>
+          </p>
           <form action={updateOrderStatus} className="mt-3 flex flex-wrap items-center gap-3">
             <input type="hidden" name="id" value={order.id} />
             <select name="status" defaultValue={order.status} aria-label={`${order.number} status`}>

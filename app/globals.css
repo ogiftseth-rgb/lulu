@@ -301,7 +301,10 @@ textarea {
 
 @media (min-width: 800px) {
   .looks { grid-template-columns: 1.3fr 1fr 1fr; }
+  .looks.dense { grid-template-columns: repeat(3, 1fr); }
 }
+
+.looks.dense .look { min-height: 16rem; }
 
 .look {
   position: relative;
