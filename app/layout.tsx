@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   description: "Elegance, made personal. Kenyan luxury fashion, bespoke clothing, and occasion wear.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
